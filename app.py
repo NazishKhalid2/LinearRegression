@@ -1,47 +1,52 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
 
-# App title
-st.title("Linear Regression Deployment")
+# Streamlit app for Linear Regression
 
-# Step 1: Upload CSV file
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
-if uploaded_file is not None:
-    # Load the dataset
-    data = pd.read_csv(uploaded_file)
-    st.write("Dataset Preview:")
-    st.dataframe(data)
+def main():
+    st.title("Linear Regression Model")
 
-    # Step 2: Feature and Target Selection
-    columns = data.columns.tolist()
-    st.write("Select Features (X) and Target (Y):")
-    X_features = st.multiselect("Select feature columns (X):", options=columns)
-    Y_feature = st.selectbox("Select target column (Y):", options=columns)
+    # File uploader
+    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 
-    if X_features and Y_feature:
-        # Step 3: Split the data
-        X = data[X_features]
-        y = data[Y_feature]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    if uploaded_file is not None:
+        # Read the CSV file
+        data = pd.read_csv(uploaded_file)
+        st.write("Data Preview:")
+        st.dataframe(data.head())
 
-        # Step 4: Train the model
-        model = LinearRegression()
-        model.fit(X_train, y_train)
+        # Allow user to select feature and target columns
+        columns = data.columns
+        feature_column = st.selectbox("Select the feature column (independent variable):", columns)
+        target_column = st.selectbox("Select the target column (dependent variable):", columns)
 
-        # Step 5: Make predictions and evaluate
-        y_pred = model.predict(X_test)
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+        if st.button("Train Linear Regression Model"):
+            # Prepare data
+            X = data[[feature_column]].values  # Independent variable
+            y = data[target_column].values  # Dependent variable
 
-        # Display results
-        st.subheader("Model Evaluation")
-        st.write(f"Mean Squared Error (MSE): {mse}")
-        st.write(f"R-squared (R²): {r2}")
+            # Train linear regression model
+            model = LinearRegression()
+            model.fit(X, y)
 
-        # Optionally show predictions
-        st.subheader("Predictions on Test Data")
-        predictions = pd.DataFrame({"Actual": y_test, "Predicted": y_pred})
-        st.dataframe(predictions)
+            # Get model parameters
+            slope = model.coef_[0]
+            intercept = model.intercept_
+            st.success(f"Model trained successfully!")
+            st.write(f"Regression Equation: y = {slope:.2f}x + {intercept:.2f}")
+
+            # Plot the regression line
+            plt.figure(figsize=(8, 6))
+            plt.scatter(X, y, color="blue", label="Data points")
+            plt.plot(X, model.predict(X), color="red", label="Regression line")
+            plt.xlabel(feature_column)
+            plt.ylabel(target_column)
+            plt.title("Linear Regression")
+            plt.legend()
+            st.pyplot(plt)
+
+if __name__ == "__main__":
+    main()
